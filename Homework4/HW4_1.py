@@ -3,77 +3,65 @@
     Homework 4.1
     Ho Duc Hoang - N20DCCN018 - D20CQCHT01-N
 """
-import cv2
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-# define constant size of image
-MAX_SIZE = 8
+SIZE = 8    # define size image
+u0, v0 = 2, 2  # Frequencies
+ROWS, COLS = np.meshgrid(np.arange(SIZE), np.arange(SIZE))
 
-def fullScaleContrast(img):
-    res = np.zeros((MAX_SIZE, MAX_SIZE))
-    _min = np.min(img)
-    _max = np.max(img)
+
+def fullScaleContrast(__img, size):
+    res = np.zeros((size, size))
+    _min, _max = np.min(__img), np.max(__img)
 
     scaleFact = 0
     if (_max - _min) != 0:
         scaleFact = 255.0 / (_max - _min)
 
-    for i in range(MAX_SIZE):
-        for j in range(MAX_SIZE):
-            res[i][j] = round(scaleFact * (img[i][j] - _min))
+    for u in range(size):
+        for v in range(size):
+            res[u][v] = round(scaleFact * (__img[u][v] - _min))
 
     return res
 
 
-# initialize image I1 arrays
-I1R = np.zeros((MAX_SIZE, MAX_SIZE))  # real part of image I1
-I1I = np.zeros((MAX_SIZE, MAX_SIZE))  # imaginary part of image I1
-u0, v0 = 2.0, 2.0
-
 """
-    - I1(m, n) = 0.5 * exp[j.2.pi.(u0.m + v0.n)/8]
+    - I1(m, n) = 0.5 * exp[j.2.pi/8.(u0.m + v0.n)]
     - e^ix = cos x + i.sin x
-    - exp[j.2.pi.(u0.m + v0.n)/8] 
-    = cos[2.pi.(u0.m + v0.n)/8] + sin[2.pi.(u0.m + v0.n)/8]
+    - exp[j.2.pi/8.(u0.m + v0.n)] 
+    = cos[2.pi/8.(u0.m + v0.n)] + sin[2.pi/8.(u0.m + v0.n)]
             real part                   imaginary part
 """
-# set the pixel values
-for m in range(MAX_SIZE):
-    for n in range(MAX_SIZE):
-        I1R[m][n] = 0.5 * np.cos(2 * np.pi / 8.0 * (u0 * m + v0 * n))
-        I1I[m][n] = 0.5 * np.sin(2 * np.pi / 8.0 * (u0 * m + v0 * n))
+# initialize image I1
+I1 = 0.5 * np.exp(1j * 2 * np.pi / 8 * (u0 * COLS + v0 * ROWS))
 
 # show real and imaginary parts of I1 as grayscale images
 # with 8 bits per pixel (bpp)
 # and full-scale contrast
-plt.subplot(221)
+plt.subplot(121)
 plt.title('Re[I1]')
+plt.imshow(fullScaleContrast(np.real(I1), SIZE), cmap='gray')
 plt.axis('off')
-I1R = fullScaleContrast(I1R)
-plt.imshow(I1R, cmap='gray')
 
-plt.subplot(222)
+plt.subplot(122)
 plt.title('Im[I1]')
+plt.imshow(fullScaleContrast(np.imag(I1), SIZE), cmap='gray')
 plt.axis('off')
-I1I = fullScaleContrast(I1I)
-plt.imshow(I1I, cmap='gray')
+
+plt.tight_layout()
+plt.show()
 
 # Compute the DFT I1
-DFT_I1 = np.fft.fftshift(np.fft.fft2(I1R + I1I, norm='forward'))
-DFT_I1R = DFT_I1.real
-DFT_I1I = DFT_I1.imag
+I1tilde = np.fft.fft2(I1)
+I1tilde = np.fft.fftshift(I1tilde)  # center it
 
-# for i in range(MAX_SIZE):
-#     for j in range(MAX_SIZE):
-#         DFT_I1R[i][j] = round(DFT_I1R[i][j])
-#         DFT_I1I[i][j] = round(DFT_I1I[i][j])
+I1tildeR = np.round(np.real(I1tilde[:SIZE][:SIZE]) * 10**4) * 10**(-4)
+I1tildeI = np.round(np.imag(I1tilde[:SIZE][:SIZE]) * 10**4) * 10**(-4)
 
-print('-----------------------------------')
 print('Re[DFT(I1)]:')
-print(DFT_I1R)
-print('-----------------------------------')
+print(I1tildeR)
+print('')
 print('Im[DFT(I1)]:')
-print(DFT_I1I)
-
-plt.show()
+print(I1tildeI)

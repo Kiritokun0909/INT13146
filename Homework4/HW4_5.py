@@ -1,42 +1,38 @@
 """"
     INT 13146 - Xu Ly Anh
-    Homework 4.5
+    Homework 4.3
     Ho Duc Hoang - N20DCCN018 - D20CQCHT01-N
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-# define constant size of image
-MAX_SIZE = 8
+SIZE = 8    # define image size
+u1, v1 = 1.5, 1.5  # Frequencies
+ROWS, COLS = np.meshgrid(np.arange(SIZE), np.arange(SIZE))
 
-def fullScaleContrast(img):
-    res = np.zeros((MAX_SIZE, MAX_SIZE))
-    _min = np.min(img)
-    _max = np.max(img)
+
+def fullScaleContrast(__img, size):
+    res = np.zeros((size, size))
+    _min, _max = np.min(__img), np.max(__img)
 
     scaleFact = 0
     if (_max - _min) != 0:
         scaleFact = 255.0 / (_max - _min)
 
-    for i in range(MAX_SIZE):
-        for j in range(MAX_SIZE):
-            res[i][j] = round(scaleFact * (img[i][j] - _min))
+    for u in range(size):
+        for v in range(size):
+            res[u][v] = round(scaleFact * (__img[u][v] - _min))
 
     return res
 
 
-# initialize image I5 arrays
-I5 = np.zeros((MAX_SIZE, MAX_SIZE))  # image I5
-u1, v1 = 1.5, 1.5
-
 """
-    - I5(m, n) = cos(2.pi.(u1.m + v1.n)/8)
+    - I5(m, n) = cos(2.pi/8.(u1.m + v1.n))
+    just the real part (no need show imaginary part)
 """
-# set the pixel values
-for m in range(MAX_SIZE):
-    for n in range(MAX_SIZE):
-        I5[m][n] = 0.5 * np.cos(2 * np.pi / 8.0 * (u1 * m + v1 * n))
+# initialize image I5
+I5 = np.cos(2 * np.pi / 8 * (u1 * COLS + v1 * ROWS))
 
 # show real and imaginary parts of I5 as grayscale images
 # with 8 bits per pixel (bpp)
@@ -44,25 +40,21 @@ for m in range(MAX_SIZE):
 plt.subplot(111)
 plt.title('I5')
 plt.axis('off')
-I5 = fullScaleContrast(I5)
-plt.imshow(I5, cmap='gray')
+plt.imshow(fullScaleContrast(I5, SIZE), cmap='gray')
+plt.show()
 
 # Compute the DFT I5
-DFT_I5 = np.fft.fftshift(np.fft.fft2(I5, norm='forward'))
-DFT_I5R = DFT_I5.real
-DFT_I5I = DFT_I5.imag
+I5tilde = np.fft.fft2(I5)
+I5tilde = np.fft.fftshift(I5tilde)  # center it
 
-# for i in range(MAX_SIZE):
-#     for j in range(MAX_SIZE):
-#         DFT_I5R[i][j] = round(DFT_I5R[i][j])
-#         DFT_I5I[i][j] = round(DFT_I5I[i][j])
+I5tildeR = np.round(np.real(I5tilde[:SIZE][:SIZE]) * 10**4) * 10**(-4)
+I5tildeI = np.round(np.imag(I5tilde[:SIZE][:SIZE]) * 10**4) * 10**(-4)
 
 print('-----------------------------------')
 print('Re[DFT(I5)]:')
-print(DFT_I5R)
+print(I5tildeR)
 print('-----------------------------------')
 print('Im[DFT(I5)]:')
-print(DFT_I5I)
+print(I5tildeI)
 
 
-plt.show()

@@ -7,63 +7,54 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# define constant size of image
-MAX_SIZE = 8
+SIZE = 8    # define image size
+u0, v0 = 2, 2  # Frequencies
+ROWS, COLS = np.meshgrid(np.arange(SIZE), np.arange(SIZE))
 
-def fullScaleContrast(img):
-    res = np.zeros((MAX_SIZE, MAX_SIZE))
-    _min = np.min(img)
-    _max = np.max(img)
+
+def fullScaleContrast(__img, size):
+    res = np.zeros((size, size))
+    _min, _max = np.min(__img), np.max(__img)
 
     scaleFact = 0
     if (_max - _min) != 0:
         scaleFact = 255.0 / (_max - _min)
 
-    for i in range(MAX_SIZE):
-        for j in range(MAX_SIZE):
-            res[i][j] = round(scaleFact * (img[i][j] - _min))
+    for u in range(size):
+        for v in range(size):
+            res[u][v] = round(scaleFact * (__img[u][v] - _min))
 
     return res
 
 
-# initialize image I3 arrays
-I3R = np.zeros((MAX_SIZE, MAX_SIZE))  # real part of image I3
-I3I = np.zeros((MAX_SIZE, MAX_SIZE))  # imaginary part of image I3
-u0, v0 = 2.0, 2.0
-
 """
-    - I3(m, n) = cos(2.pi.(u0.m + v0.n)/8)
+    - I3(m, n) = cos(2.pi/8.(u0.m + v0.n))
+    just the real part (no need show imaginary part)
 """
-# set the pixel values
-for m in range(MAX_SIZE):
-    for n in range(MAX_SIZE):
-        I3R[m][n] = 0.5 * np.cos(2 * np.pi / 8.0 * (u0 * m + v0 * n))
-        I3I[m][n] = 0
+# initialize image I3
+I3 = np.cos(2 * np.pi / 8 * (u0 * COLS + v0 * ROWS))
 
 # show real and imaginary parts of I3 as grayscale images
 # with 8 bits per pixel (bpp)
 # and full-scale contrast
-plt.subplot(221)
-plt.title('Re[I3]')
+plt.subplot(111)
+plt.title('I3')
 plt.axis('off')
-I3R = fullScaleContrast(I3R)
-plt.imshow(I3R, cmap='gray')
+plt.imshow(fullScaleContrast(I3, SIZE), cmap='gray')
+plt.show()
 
 # Compute the DFT I3
-DFT_I3 = np.fft.fftshift(np.fft.fft2(I3R + I3I, norm='forward'))
-DFT_I3R = DFT_I3.real
-DFT_I3I = DFT_I3.imag
+I3tilde = np.fft.fft2(I3)
+I3tilde = np.fft.fftshift(I3tilde)  # center it
 
-# for i in range(MAX_SIZE):
-#     for j in range(MAX_SIZE):
-#         DFT_I3R[i][j] = round(DFT_I3R[i][j])
-#         DFT_I3I[i][j] = round(DFT_I3I[i][j])
+I3tildeR = np.round(np.real(I3tilde[:SIZE][:SIZE]) * 10**4) * 10**(-4)
+I3tildeI = np.round(np.imag(I3tilde[:SIZE][:SIZE]) * 10**4) * 10**(-4)
 
 print('-----------------------------------')
 print('Re[DFT(I3)]:')
-print(DFT_I3R)
+print(I3tildeR)
 print('-----------------------------------')
 print('Im[DFT(I3)]:')
-print(DFT_I3I)
+print(I3tildeI)
 
-plt.show()
+
